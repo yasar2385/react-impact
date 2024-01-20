@@ -2,7 +2,7 @@ import { Inter } from 'next/font/google'
 import Script from 'next/script';
 import './globals.scss'
 import dynamic from 'next/dynamic';
-import BoostrapClient from './components/BoostrapClient'
+import BoostrapClient from './plugins/BoostrapClient'
 
 const inter = Inter({ subsets: ['latin'] })
 

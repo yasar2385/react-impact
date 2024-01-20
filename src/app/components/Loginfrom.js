@@ -1,82 +1,190 @@
-"use client"
-import React, { useState, useEffect } from "react"
-import Ajaxcall from "./Ajaxcall";
+"use client";
+import React, { useState, useEffect } from "react";
+import Image from 'next/legacy/image'
+import { useRouter } from 'next/navigation'
+
+// ? PROEJCT
+import FetchDataBase from "../auth/Ajaxcall";
+import Footer from './Footer'
+import Imagerender from './Imagerender'
+import nglogo from '../assets/newgen.svg'
+import implogo from '../assets/impact.svg'
+// ? FROM THIRD PARTY
+import Button from "@mui/material/Button";
+import Avatar from "@mui/material/Avatar";
+import CssBaseline from "@mui/material/CssBaseline";
+import TextField from "@mui/material/TextField";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+import Link from "@mui/material/Link";
+import Grid from "@mui/material/Grid";
+import Box from "@mui/material/Box";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import Typography from "@mui/material/Typography";
+import Container from "@mui/material/Container";
+// import CircularProgress from '@mui/material-next/CircularProgress';
+import { CircularProgress } from '@mui/material';
+
+
 
 function LoginForm() {
   const [formData, setFormData] = useState({
     email: "",
-    password: ""
+    password: "",
+    email_helpText: "",
+    email_error: false,
+    password_helpText: "",
+    password_error: false,
+
   });
-
   const [errors, setErrors] = useState({});
-  const [submitted, setSubmitted] = useState(false);
-
+  const [submitted, setSubmitted] = useState(false);  
+  const router = useRouter();
+  // useEffect(() => { })
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     console.log(name, value);
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
-
-  const validateForm = () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     let isValid = true;
     const newErrors = {};
-
     // Validate email
     if (!formData.email) {
       newErrors.email = "Email is required";
       isValid = false;
     }
-
     // Validate password
     if (!formData.password) {
       newErrors.password = "Password is required";
       isValid = false;
     }
-    const result = Ajaxcall(formData, 'userlogin');
+    if (!isValid) {
+      setErrors(newErrors);
+      return
+    }
+    const result = await FetchDataBase(formData, "userlogin");
     console.log(result);
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      // Form is valid, you can submit or process the data here
-      console.log("Form data:", formData);
-      setSubmitted(true); // Set a submitted flag
-    } else {
-      // Form is not valid, display error messages
+    if (result) {
+      if (result.cred == 1) {
+        localStorage.clear();
+        'username,client,_client_list,displayName,userid,_workflow_role,apikey'.split(",").forEach((key) => {
+          if (result[key]) localStorage.setItem("xmleditor:login_" + key.replace(/^_/gi, ''), result[key]);
+        });
+        setSubmitted(!0);
+        router.push('/dashboard', { scroll: false })
+      } else {
+        setFormData({
+          ...formData,
+          ['email_error']: result.cred == 2 ? true : false,
+          ['email_helpText']: result.cred == 2 ? "Invalid email" : "",
+          ['password_helpText']: (result.cred == 0 || result.cred == 2) ? 'Invalid Password' : "",
+          ['password_error']: (result.cred == 0 || result.cred == 2) ? true : false,
+        });
+        setSubmitted(!1);
+      }
     }
   };
-
+  
   const isFormValid = Object.keys(errors).length === 0;
+
   return (
-    <>
-      {submitted ? (<div className="success-message">Login successful!</div>) : (<form onSubmit={handleSubmit}>
-        <div className="input-group mb-3 mt-5">
-          <span className="input-group-text"><i className="bi bi-person"></i></span>
-          <div className="form-floating">
-            <input type="text" name="email"  className="form-control" id="floatingInputGroup1" placeholder="Username" value={formData.email} onChange={handleInputChange} />
-            <label htmlFor="floatingInputGroup1">Username</label>
-          </div>
-        </div>
-        <div className="input-group mb-3">
-          <span className="input-group-text"><i className="bi bi-key-fill"></i></span>
-          <div className="form-floating">
-            <input type="password" name="password" className="form-control" id="floatingPassword" placeholder="Password" value={formData.password} onChange={handleInputChange} />
-            <label htmlFor="floatingPassword">Password</label>
-            {errors.password && <div id="floatingPasswordFeedback" className="invalid-feedback">errors.password</div>}
-          </div>
-        </div>
-        <div className="d-grid gap-2">
-          <button className="btn btn-primary" type="submit" disabled={!isFormValid}>Submit</button>
-        </div>
-      </form>)}
+    <> 
+    
+    {/* <Link href="/dashboard"><a>Dashboard</a></Link> */}
+    <Container component="main" maxWidth="xs" sx={{
+              marginTop: 8,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              minHeight: '100vh',
+            }}>{" "}
+            <Box sx={{display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center', }}>
+              {/* <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}><LockOutlinedIcon /></Avatar>{" "} */}
+              <Avatar sx={{ m: 1, bgcolor: 'white', width: 100, height: 100  }}><Image src={nglogo} alt="Newgen Icon"/></Avatar>{" "}
+              <Avatar sx={{ m: 1, bgcolor: 'white', width: 100, height: 100  }}><Image src={implogo} alt="IMPACT Icon"/></Avatar>{" "}
+            </Box>
+            <Typography component="h1" variant="h5">Sign in</Typography>
+            <Box
+              component="form"
+              onSubmit={handleSubmit}
+              noValidate
+              sx={{
+                mt: 1,
+              }}
+            >
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="email"
+                label="Email Address"
+                name="email"
+                autoComplete="email"
+                autoFocus
+                sx={{
+                  bgcolor: "white",
+                }}
+                value={formData.email} onChange={handleInputChange}
+                helperText={formData.email_helpText}
+                error={formData.email_error ? !0 : !1}
+              />{" "}
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="Password"
+                type="password"
+                id="password"
+                autoComplete="current-password"
+                value={formData.password} onChange={handleInputChange}
+                helperText={formData.password_helpText}
+                error={formData.password_error ? !0 : !1}
+                sx={{
+                  bgcolor: "white",
+                }}
+              />{" "}
+              <FormControlLabel
+                control={<Checkbox value="remember" color="primary" />}
+                label="Remember me"
+              />
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                disabled={!isFormValid}
+                sx={{
+                  mt: 3,
+                  mb: 2,
+                }}
+              >
+                Sign In{" "}
+              </Button>{" "}
+              {/* <Grid container>
+                <Grid item xs>
+                  <Link href="#" variant="body2">
+                    Forgot password ?
+                  </Link>{" "}
+                </Grid>{" "}
+                <Grid item>
+                  <Link href="#" variant="body2">
+                    {" "}
+                    {"Don't have an account? Sign Up"}{" "}
+                  </Link>{" "}
+                </Grid>{" "}
+              </Grid>{" "} */}
+            </Box>
+            {" "}
+      </Container>
     </>
   );
 }
+
 export default LoginForm;
